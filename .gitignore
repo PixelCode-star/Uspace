@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output (web + Capacitor webDir)
+dist/
+
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Deploy script contains Bunny Storage password (use deploy.ps1.example)
+deploy.ps1
+
+# Generated copy of favicon for Capacitor Assets (build-android.ps1 recreates it)
+assets/logo.png
+
+# Logs & debug
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/*
+!.vscode/extensions.json
+
+# Vite
+*.local

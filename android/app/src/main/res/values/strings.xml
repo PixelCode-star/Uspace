@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Uspace Marketplace</string>
+    <string name="title_activity_main">Uspace Marketplace</string>
+    <string name="package_name">com.uspace.app</string>
+    <string name="custom_url_scheme">com.uspace.app</string>
+</resources>
