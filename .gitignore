@@ -15,6 +15,20 @@ deploy.ps1
 # Generated copy of favicon for Capacitor Assets (build-android.ps1 recreates it)
 assets/logo.png
 
+# Node installer copies that sometimes land in the project folder — never commit
+node.exe
+nodevars.bat
+npm
+npm.cmd
+npx
+npx.cmd
+corepack
+corepack.cmd
+install_tools.bat
+
+# Android Studio (local machine state)
+android/.idea/
+
 # Logs & debug
 *.log
 npm-debug.log*
