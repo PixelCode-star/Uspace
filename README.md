@@ -1,60 +1,114 @@
-# Uspace Student Housing Platform
+# Uspace — Student Housing Platform
 
-Uspace is a fast, responsive Single-Page Application (SPA) built for Unilus students to find off-campus housing. It connects landlords directly with verified students to fill vacancies fast without zero friction.
+> Find your next boarding house near Unilus School of Medicine. Verified listings, real reviews, no WhatsApp chaos.
 
-## Architecture & Tech Stack
+[![Deployed on Cloudflare Pages](https://img.shields.io/badge/Deployed-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)](https://uspace.pages.dev)
 
-This project was recently migrated from a static, vanilla HTML/JS monolith to a modern modular architecture for drastically improved maintainability, speed, and real-time capability.
+---
 
-- **Frontend Framework**: React 18
-- **Build Tool**: Vite (Lightning-fast HMR and optimized production bundling)
-- **Routing**: `react-router-dom` v6
-- **Database / Auth**: Supabase (PostgreSQL, Realtime, Storage)
-- **Styling**: Pure semantic CSS with dynamic variable theming (Dark UI / Green Accents)
-- **Iconography**: Phosphor Icons
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 18 |
+| Build Tool | Vite 6 |
+| Routing | React Router v6 (HashRouter) |
+| Database / Auth | Supabase (PostgreSQL + RLS + Storage) |
+| Styling | Vanilla CSS — dark mode, CSS variables |
+| Icons | Phosphor Icons |
+| Maps | Leaflet + react-leaflet |
+| Mobile | Capacitor (Android) |
+| Hosting | Cloudflare Pages |
+
+---
 
 ## Local Development
 
-The workspace includes a self-contained Node environment. 
-To start the local Hot-Module Replacement (HMR) server, simply run:
+### 1. Clone & Install
 
-```powershell
-.\npm.cmd run dev
+```bash
+git clone https://github.com/PixelCode-star/Uspace.git
+cd Uspace
+npm install
 ```
 
-The application will be served at `http://localhost:5173/`. 
-Any changes made inside `src/` will instantly update the browser without losing application state.
+### 2. Environment Variables
 
-### Environment Variables
-You must have a `.env.local` file at the root containing your Supabase credentials:
+Create a `.env.local` file at the project root (never committed):
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+
+> **Important:** Vite bakes these values into the bundle at build time. Missing env vars = blank page.
+
+### 3. Start Dev Server
+
+```bash
+npm run dev
 ```
 
-## Deployment
+App runs at `http://localhost:5173/`
 
-Uspace edge-deploys its static front-end via **Bunny.net**.
+---
 
-To push your latest changes live to the CDN:
+## Deployment (Cloudflare Pages)
 
-1. **Build the production bundle**: 
-   Because Uspace uses Vite, you must compile the application before deploying.
-   ```powershell
-   .\npm.cmd run build
+### Option A — GitHub Auto-Deploy (Recommended)
+
+1. Push to `main` branch
+2. Cloudflare Pages auto-builds and deploys
+
+**Required:** Add env vars in Cloudflare Pages dashboard → Settings → Environment variables:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+### Option B — Manual Upload
+
+1. Build locally (env vars must be present in `.env.local`):
+   ```bash
+   npm run build
    ```
-   This generates pre-rendered, optimized HTML, JS, and CSS into the `dist/` folder.
+2. Upload the `dist/` folder via Cloudflare Pages → Upload assets
 
-2. **Run the Deployment Script**:
-   The `deploy.ps1` PowerShell script hooks directly into the Bunny.net REST API to cleanly upload the `dist/` output logic to the CDN, ensuring high caching behavior and no useless module bloat.
-   
-   Ensure your API keys are configured correctly inside `deploy.ps1`, then run:
-   ```powershell
-   .\deploy.ps1
-   ```
+> The `public/_redirects` file (`/* /index.html 200`) ensures SPA routing works on Cloudflare.
 
-## Database Schema (Supabase)
+---
 
-To view or restore the PostgreSQL schema (which includes all Tables, Types, and Row-Level Security Policies protecting the platform), see `supabase-schema.sql`.
+## Project Structure
 
-If you ever see a `failed to upload image` error, run the **Storage Bucket Configuration** snippet located at the very bottom of the SQL file in your Supabase SQL Editor.
+```
+src/
+├── components/       # Reusable UI components (Navbar, AuthModal, ListingCard, etc.)
+├── context/          # React Context (AuthContext)
+├── hooks/            # Custom hooks
+├── lib/              # Supabase client + API helpers
+├── pages/            # Route-level pages (Home, Browse, Listing, Landlord, Dashboard)
+└── styles/           # Global CSS design system
+public/
+├── _redirects        # Cloudflare Pages SPA fallback
+├── favicon.png
+└── logo-nobg.png
+android/              # Capacitor Android project
+```
+
+---
+
+## Database
+
+The full PostgreSQL schema (tables, types, Row-Level Security policies) is in `supabase-schema.sql`.
+
+To restore or inspect the schema, paste the contents into your Supabase SQL Editor.
+
+> If image uploads fail, run the **Storage Bucket Configuration** snippet at the bottom of `supabase-schema.sql`.
+
+---
+
+## Android Build
+
+```bash
+npm run android:update   # build web + sync to Capacitor
+```
+
+Open `android/` in Android Studio to build the APK.
