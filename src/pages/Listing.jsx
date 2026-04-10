@@ -91,7 +91,7 @@ export default function Listing() {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--green)' }}>
-            K{listing.price_monthly?.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/month</span>
+            {listing.room_types && listing.room_types.length > 0 ? "From " : ""}K{listing.price_monthly?.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/month</span>
           </div>
           <div className="text-muted mt-2">
             <i className="ph-fill ph-star" style={{ color: 'var(--green)' }}></i> {listing.rating || 0} ({listing.review_count || 0} reviews)
@@ -195,13 +195,29 @@ export default function Listing() {
             <li style={{ marginBottom: '8px' }}>Security Deposit: {listing.deposit ? `K${listing.deposit.toLocaleString()}` : 'None'}</li>
             <li style={{ marginBottom: '8px' }}>Available Rooms: {listing.available_rooms} / {listing.total_rooms}</li>
           </ul>
+
+          {listing.room_types && listing.room_types.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '16px', marginTop: '32px' }}>Room Options</h3>
+              <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
+                {listing.room_types.map((rt, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--r-md)', border: '1px solid var(--bg-highlight)' }}>
+                    <div style={{ fontWeight: 600 }}>{rt.name}</div>
+                    <div style={{ color: 'var(--green)', fontWeight: 700 }}>K{rt.price}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Sidebar / CTA */}
         <div>
           <div style={{ background: 'var(--bg-elevated)', padding: '32px', borderRadius: 'var(--r-xl)', border: '1px solid var(--bg-highlight)', position: 'sticky', top: '100px' }}>
              <div style={{ marginBottom: '24px' }}>
-               <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--green)' }}>K{listing.price_monthly} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ month</span></div>
+               <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--green)' }}>
+                 {listing.room_types && listing.room_types.length > 0 ? "From K" : "K"}{listing.price_monthly} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ month</span>
+               </div>
                {listing.security_deposit > 0 && (
                  <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
                    + K{listing.security_deposit} Security Deposit
@@ -233,14 +249,14 @@ export default function Listing() {
                Request to Book
              </button>
 
-             {listing.profiles?.phone_number ? (
+             {listing.contact_number || listing.profiles?.phone_number ? (
                 <>
-                  <a href={`https://wa.me/${listing.profiles.phone_number.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
+                  <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
                    <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> WhatsApp Landlord
                   </a>
                   <div style={{ textAlign: 'center', color: 'var(--white)', fontSize: '1.1rem', fontWeight: 600, padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)' }}>
                     <i className="ph ph-phone" style={{ marginRight: '8px', color: 'var(--text-muted)' }}></i>
-                    {listing.profiles.phone_number}
+                    {listing.contact_number || listing.profiles.phone_number}
                   </div>
                 </>
              ) : (

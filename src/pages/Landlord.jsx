@@ -56,7 +56,7 @@ export default function Landlord() {
   const [editingId, setEditingId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', price: '', area: '', distance: '', rooms: '', avail: '', desc: '', phone: '', deposit: ''
+    title: '', price: '', area: '', distance: '', rooms: '', avail: '', desc: '', phone: '', deposit: '', roomTypes: []
   });
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [photos, setPhotos] = useState([]); // Array of { id, type: 'existing' | 'new', url, file? }
@@ -65,13 +65,25 @@ export default function Landlord() {
   const [mapPosition, setMapPosition] = useState(UNILUS_COORDS);
   const [distanceMeters, setDistanceMeters] = useState(0);
 
+  const updateMapPin = (lat, lng) => {
+    setMapPosition({ lat, lng });
+    const dist = getDistanceFromLatLonInM(UNILUS_COORDS.lat, UNILUS_COORDS.lng, lat, lng);
+    setDistanceMeters(dist);
+    setFormData(prev => ({...prev, distance: dist < 1000 ? `${dist}m from Unilus` : `${(dist/1000).toFixed(1)}km from Unilus`}));
+  };
+
+  function MapUpdater({ center }) {
+    const map = useMapEvents({});
+    useEffect(() => {
+      if (center) map.flyTo(center, 14);
+    }, [center, map]);
+    return null;
+  }
+
   function LocationMarker() {
     useMapEvents({
       click(e) {
-        setMapPosition(e.latlng);
-        const dist = getDistanceFromLatLonInM(UNILUS_COORDS.lat, UNILUS_COORDS.lng, e.latlng.lat, e.latlng.lng);
-        setDistanceMeters(dist);
-        setFormData(prev => ({...prev, distance: dist < 1000 ? `${dist}m from Unilus` : `${(dist/1000).toFixed(1)}km from Unilus`}));
+        updateMapPin(e.latlng.lat, e.latlng.lng);
       },
     })
     return mapPosition === null ? null : <Marker position={mapPosition}></Marker>
@@ -166,9 +178,16 @@ export default function Landlord() {
 
       if (FinalImageUrls.length === 0) FinalImageUrls.push('/assets/exterior1.png');
 
+      let derivedPrice = parseInt(formData.price) || 0;
+      if (formData.roomTypes && formData.roomTypes.length > 0) {
+         let allPrices = formData.roomTypes.map(rt => parseInt(rt.price)).filter(p => !isNaN(p));
+         if(parseInt(formData.price)) allPrices.push(parseInt(formData.price));
+         if (allPrices.length > 0) derivedPrice = Math.min(...allPrices);
+      }
+
       const payload = {
         title: formData.title,
-        price_monthly: parseInt(formData.price),
+        price_monthly: derivedPrice,
         security_deposit: parseInt(formData.deposit) || 0,
         area: formData.area,
         total_rooms: parseInt(formData.rooms),
@@ -178,6 +197,8 @@ export default function Landlord() {
         distance_meters: distanceMeters || parseInt(formData.distance) || 0,
         amenities: selectedAmenities,
         images: FinalImageUrls,
+        contact_number: formData.phone || null,
+        room_types: formData.roomTypes || [],
         is_active: true
       };
 
@@ -188,11 +209,6 @@ export default function Landlord() {
         payload.rating = 0; payload.review_count = 0;
         const { error } = await SupabaseAPI.addListing(payload);
         if (error) throw error;
-      }
-      
-      // Update phone number if provided
-      if (formData.phone) {
-        await SupabaseAPI.updateProfile({ phone_number: formData.phone });
       }
 
       window.dispatchEvent(new CustomEvent('show-dialog', { 
@@ -215,7 +231,8 @@ export default function Landlord() {
     setFormData({
       title: listing.title || '', price: listing.price_monthly || '', area: listing.area || '', 
       distance: listing.distance_text || '', rooms: listing.total_rooms || '', avail: listing.available_rooms || '', 
-      desc: listing.description || '', phone: '', deposit: listing.security_deposit || ''
+      desc: listing.description || '', phone: listing.contact_number || '', deposit: listing.security_deposit || '',
+      roomTypes: listing.room_types || []
     });
     setSelectedAmenities(listing.amenities || []);
     
@@ -246,7 +263,7 @@ export default function Landlord() {
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData({ title: '', price: '', area: '', distance: '', rooms: '', avail: '', desc: '', phone: '', deposit: '' });
+    setFormData({ title: '', price: '', area: '', distance: '', rooms: '', avail: '', desc: '', phone: '', deposit: '', roomTypes: [] });
     setSelectedAmenities([]);
     setPhotos([]);
   };
@@ -309,14 +326,63 @@ export default function Landlord() {
                    <div className="form-group"><label>Area / Street Name *</label><input id="area" value={formData.area} onChange={handleInputChange} className="form-input" /></div>
                    <div className="form-group"><label>Total Rooms *</label><input type="number" id="rooms" value={formData.rooms} onChange={handleInputChange} className="form-input" /></div>
                    <div className="form-group"><label>Available Rooms</label><input type="number" id="avail" value={formData.avail} onChange={handleInputChange} className="form-input" /></div>
-                   <div className="form-group"><label>WhatsApp Number</label><input type="tel" id="phone" value={formData.phone} onChange={handleInputChange} className="form-input" placeholder="+260..." /></div>
+                   <div className="form-group"><label>WhatsApp Number (Defaults to Profile if empty)</label><input type="tel" id="phone" value={formData.phone} onChange={handleInputChange} className="form-input" placeholder="+260..." /></div>
                    
                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                     <label>Location (Click on the map to set pin and auto-calculate distance)</label>
+                     <label>Alternative Room Options (Optional, e.g. Room for 3 at 1500)</label>
+                     <div style={{ display: 'grid', gap: '8px', marginBottom: '8px' }}>
+                       {formData.roomTypes && formData.roomTypes.map((rt, i) => (
+                         <div key={i} style={{ display: 'flex', gap: '8px' }}>
+                           <input type="text" placeholder="e.g. Room for 3" value={rt.name} onChange={e => {
+                             const newRt = [...formData.roomTypes]; newRt[i].name = e.target.value; setFormData(prev => ({...prev, roomTypes: newRt}));
+                           }} className="form-input" style={{flex: 1}} />
+                           <input type="number" placeholder="Price (K)" value={rt.price} onChange={e => {
+                             const newRt = [...formData.roomTypes]; newRt[i].price = e.target.value; setFormData(prev => ({...prev, roomTypes: newRt}));
+                           }} className="form-input" style={{width: '120px'}} />
+                           <button type="button" className="btn btn-outline" onClick={() => {
+                             const newRt = formData.roomTypes.filter((_, idx) => idx !== i);
+                             setFormData(prev => ({...prev, roomTypes: newRt}));
+                           }} style={{color: '#ff4444', borderColor: 'rgba(255,0,0,0.3)', padding: '0 12px'}}><i className="ph ph-trash"></i></button>
+                         </div>
+                       ))}
+                     </div>
+                     <button type="button" className="btn btn-outline btn-sm" onClick={() => setFormData(prev => ({...prev, roomTypes: [...(prev.roomTypes || []), {name: '', price: ''}]}))}>
+                       + Add Another Room Option
+                     </button>
+                   </div>
+
+                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                     <label>Location (Search or click on the map to set pin and auto-calculate distance)</label>
                      <p className="text-muted" style={{fontSize: '0.875rem', marginBottom: '8px'}}>{formData.distance || 'Please drop a pin on the map to set the distance from Unilus.'}</p>
+                     
+                     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                       <input type="text" id="mapSearch" className="form-input" placeholder="Search for nearby places..." style={{ flex: 1 }} onKeyDown={(e) => {
+                         if (e.key === 'Enter') {
+                            e.preventDefault();
+                            document.getElementById('mapSearchBtn').click();
+                         }
+                       }} />
+                       <button type="button" id="mapSearchBtn" className="btn btn-outline" onClick={() => {
+                          const val = document.getElementById('mapSearch').value;
+                          if(val) {
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
+                              .then(r => r.json())
+                              .then(data => {
+                                if (data && data.length > 0) {
+                                  const { lat, lon } = data[0];
+                                  updateMapPin(parseFloat(lat), parseFloat(lon));
+                                } else {
+                                  window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Place not found on map' } }));
+                                }
+                              });
+                          }
+                       }}>Search</button>
+                     </div>
+
                      <div style={{ height: '240px', width: '100%', borderRadius: 'var(--r-md)', overflow: 'hidden', border: '1px solid var(--bg-highlight)' }}>
                        <MapContainer center={UNILUS_COORDS} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1 }}>
                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                         <MapUpdater center={mapPosition} />
                          <LocationMarker />
                        </MapContainer>
                      </div>

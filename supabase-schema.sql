@@ -36,6 +36,8 @@ CREATE TABLE public.listings (
   available_rooms INTEGER NOT NULL,
   amenities TEXT[] DEFAULT '{}',
   images TEXT[] DEFAULT '{}',
+  contact_number TEXT,
+  room_types JSONB DEFAULT '[]'::jsonb,
   rating NUMERIC(2,1) DEFAULT 0.0,
   review_count INTEGER DEFAULT 0,
   is_verified BOOLEAN DEFAULT false,

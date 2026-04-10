@@ -26,7 +26,12 @@ export default function Footer() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', paddingTop: '32px', borderTop: '1px solid var(--bg-highlight)', color: 'var(--text-faint)' }}>
           <span>© 2026 Uspace. Student built · Silverest, Zambia</span>
-          <span style={{ color: 'var(--green)' }}>Find your next boarding house ✨</span>
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', textAlign: 'right' }}>
+            <span style={{ color: 'var(--green)' }}>Find your next boarding house ✨</span>
+            <span className="text-muted" style={{ fontSize: '0.7rem', opacity: 0.85 }} title="From package.json — bump after release. Android needs npm run build + cap sync to see new code.">
+              Build v{__APP_VERSION__}
+            </span>
+          </span>
         </div>
       </div>
     </footer>
