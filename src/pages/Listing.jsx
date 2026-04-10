@@ -172,6 +172,101 @@ export default function Listing() {
         )}
       </div>
 
+      {/* ===== AVAILABLE PLANS ===== */}
+      {listing.room_types && listing.room_types.length > 0 && (() => {
+        const phone = listing.contact_number || listing.profiles?.phone_number;
+        const waBase = phone ? `https://wa.me/${phone.replace(/\D/g,'')}` : null;
+        return (
+          <div style={{ marginBottom: '48px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.75rem' }}>Available Plans</h2>
+              <span style={{ background: 'rgba(30,215,96,0.15)', color: 'var(--green)', border: '1px solid rgba(30,215,96,0.3)', borderRadius: '50px', padding: '4px 14px', fontSize: '0.8rem', fontWeight: 700 }}>
+                {listing.room_types.length} option{listing.room_types.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+              {listing.room_types.map((rt, i) => {
+                const isLowest = rt.price === Math.min(...listing.room_types.map(r => Number(r.price)));
+                const waMsg = waBase
+                  ? `${waBase}?text=${encodeURIComponent(`Hi, I'm interested in the *${rt.name}* plan (K${rt.price}/month) at *${listing.title}*. Is it still available?`)}`
+                  : null;
+                return (
+                  <div key={i} style={{
+                    background: isLowest ? 'linear-gradient(135deg, rgba(30,215,96,0.12) 0%, rgba(30,215,96,0.04) 100%)' : 'var(--bg-elevated)',
+                    border: isLowest ? '1.5px solid rgba(30,215,96,0.5)' : '1px solid var(--bg-highlight)',
+                    borderRadius: 'var(--r-xl)',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    position: 'relative',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
+                    {isLowest && (
+                      <div style={{
+                        position: 'absolute', top: '-11px', left: '20px',
+                        background: 'var(--green)', color: '#000',
+                        fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase',
+                        letterSpacing: '0.06em', padding: '3px 10px', borderRadius: '50px'
+                      }}>Best Value</div>
+                    )}
+                    {/* Plan name */}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{rt.name}</div>
+                      {rt.description && (
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{rt.description}</div>
+                      )}
+                    </div>
+                    {/* Price */}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                      <span style={{ fontSize: '2rem', fontWeight: 800, color: isLowest ? 'var(--green)' : 'var(--white)' }}>K{Number(rt.price).toLocaleString()}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>/month</span>
+                    </div>
+                    {/* Deposit info if any */}
+                    {listing.security_deposit > 0 && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-faint)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="ph ph-info"></i> + K{listing.security_deposit.toLocaleString()} deposit
+                      </div>
+                    )}
+                    {/* CTA */}
+                    {waMsg ? (
+                      <a
+                        href={waMsg}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={isLowest ? 'btn btn-primary' : 'btn btn-outline'}
+                        style={{ textAlign: 'center', marginTop: 'auto' }}
+                      >
+                        <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.1rem' }}></i>
+                        Enquire on WhatsApp
+                      </a>
+                    ) : (
+                      <button
+                        className={isLowest ? 'btn btn-primary' : 'btn btn-outline'}
+                        style={{ marginTop: 'auto' }}
+                        onClick={() => {
+                          if (!user) {
+                            window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+                            return;
+                          }
+                          SupabaseAPI.requestBooking(listing.id, 'viewing');
+                          window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Viewing request sent! The landlord will contact you.' } }));
+                        }}
+                      >
+                        Request Viewing
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Content Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
         
@@ -192,45 +287,33 @@ export default function Listing() {
 
           <h3 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Rules & Details</h3>
           <ul style={{ paddingLeft: '20px', color: 'var(--text-muted)' }}>
-            <li style={{ marginBottom: '8px' }}>Security Deposit: {listing.deposit ? `K${listing.deposit.toLocaleString()}` : 'None'}</li>
+            <li style={{ marginBottom: '8px' }}>Security Deposit: {listing.deposit ? `K${listing.deposit.toLocaleString()}` : listing.security_deposit > 0 ? `K${listing.security_deposit.toLocaleString()}` : 'None'}</li>
             <li style={{ marginBottom: '8px' }}>Available Rooms: {listing.available_rooms} / {listing.total_rooms}</li>
           </ul>
-
-          {listing.room_types && listing.room_types.length > 0 && (
-            <>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '16px', marginTop: '32px' }}>Room Options</h3>
-              <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
-                {listing.room_types.map((rt, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--r-md)', border: '1px solid var(--bg-highlight)' }}>
-                    <div style={{ fontWeight: 600 }}>{rt.name}</div>
-                    <div style={{ color: 'var(--green)', fontWeight: 700 }}>K{rt.price}</div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </div>
 
         {/* Sidebar / CTA */}
         <div>
           <div style={{ background: 'var(--bg-elevated)', padding: '32px', borderRadius: 'var(--r-xl)', border: '1px solid var(--bg-highlight)', position: 'sticky', top: '100px' }}>
              <div style={{ marginBottom: '24px' }}>
+               <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+                 {listing.room_types && listing.room_types.length > 0 ? 'Starting from' : 'Monthly rent'}
+               </div>
                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--green)' }}>
-                 {listing.room_types && listing.room_types.length > 0 ? "From K" : "K"}{listing.price_monthly} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ month</span>
+                 K{listing.room_types && listing.room_types.length > 0
+                   ? Math.min(...listing.room_types.map(r => Number(r.price))).toLocaleString()
+                   : listing.price_monthly?.toLocaleString()}
+                 <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}> / month</span>
                </div>
                {listing.security_deposit > 0 && (
-                 <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
-                   + K{listing.security_deposit} Security Deposit
+                 <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '6px' }}>
+                   <i className="ph ph-lock-key" style={{ marginRight: '4px' }}></i>
+                   K{listing.security_deposit.toLocaleString()} security deposit
                  </div>
                )}
                {listing.room_types && listing.room_types.length > 0 && (
-                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                   {listing.room_types.map((rt, i) => (
-                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', background: 'rgba(255,255,255,0.05)', padding: '8px 12px', borderRadius: '6px' }}>
-                       <span style={{ color: 'var(--text-muted)' }}>{rt.name}</span>
-                       <span style={{ fontWeight: 600, color: 'var(--white)' }}>K{rt.price}</span>
-                     </div>
-                   ))}
+                 <div style={{ marginTop: '4px', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
+                   {listing.room_types.length} plan{listing.room_types.length !== 1 ? 's' : ''} available — see below
                  </div>
                )}
              </div>
@@ -253,7 +336,6 @@ export default function Listing() {
                  btn.innerHTML = '<i class="ph ph-check-circle"></i> Request Sent!';
                  btn.style.background = 'var(--bg-highlight)';
                  btn.style.color = 'var(--white)';
-                 // Optionally disable it so they can't spam it
                }
              }}>
                Request to Book
