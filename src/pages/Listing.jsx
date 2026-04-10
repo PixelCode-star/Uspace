@@ -223,6 +223,16 @@ export default function Listing() {
                    + K{listing.security_deposit} Security Deposit
                  </div>
                )}
+               {listing.room_types && listing.room_types.length > 0 && (
+                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                   {listing.room_types.map((rt, i) => (
+                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', background: 'rgba(255,255,255,0.05)', padding: '8px 12px', borderRadius: '6px' }}>
+                       <span style={{ color: 'var(--text-muted)' }}>{rt.name}</span>
+                       <span style={{ fontWeight: 600, color: 'var(--white)' }}>K{rt.price}</span>
+                     </div>
+                   ))}
+                 </div>
+               )}
              </div>
              
              <button id="bookBtn" className="btn btn-primary w-full" style={{ marginBottom: '16px' }} onClick={async (e) => {
