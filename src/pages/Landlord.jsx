@@ -64,12 +64,37 @@ export default function Landlord() {
   // Map State
   const [mapPosition, setMapPosition] = useState(UNILUS_COORDS);
   const [distanceMeters, setDistanceMeters] = useState(0);
+  const [geoLocating, setGeoLocating] = useState(false);
 
   const updateMapPin = (lat, lng) => {
     setMapPosition({ lat, lng });
     const dist = getDistanceFromLatLonInM(UNILUS_COORDS.lat, UNILUS_COORDS.lng, lat, lng);
     setDistanceMeters(dist);
     setFormData(prev => ({...prev, distance: dist < 1000 ? `${dist}m from Unilus` : `${(dist/1000).toFixed(1)}km from Unilus`}));
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Geolocation is not supported by your browser.' } }));
+      return;
+    }
+    setGeoLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        updateMapPin(latitude, longitude);
+        setGeoLocating(false);
+      },
+      (error) => {
+        setGeoLocating(false);
+        let msg = 'Unable to retrieve your location.';
+        if (error.code === 1) msg = 'Location permission denied. Please enable location access in your browser/device settings.';
+        if (error.code === 2) msg = 'Location unavailable. Make sure GPS is enabled.';
+        if (error.code === 3) msg = 'Location request timed out. Please try again.';
+        window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Location Error', message: msg } }));
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   };
 
   function MapUpdater({ center }) {
@@ -355,8 +380,8 @@ export default function Landlord() {
                      <label>Location (Search or click on the map to set pin and auto-calculate distance)</label>
                      <p className="text-muted" style={{fontSize: '0.875rem', marginBottom: '8px'}}>{formData.distance || 'Please drop a pin on the map to set the distance from Unilus.'}</p>
                      
-                     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                       <input type="text" id="mapSearch" className="form-input" placeholder="Search for nearby places..." style={{ flex: 1 }} onKeyDown={(e) => {
+                     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                       <input type="text" id="mapSearch" className="form-input" placeholder="Search for nearby places..." style={{ flex: 1, minWidth: '180px' }} onKeyDown={(e) => {
                          if (e.key === 'Enter') {
                             e.preventDefault();
                             document.getElementById('mapSearchBtn').click();
@@ -377,6 +402,18 @@ export default function Landlord() {
                               });
                           }
                        }}>Search</button>
+                       <button
+                          type="button"
+                          className="btn btn-primary"
+                          disabled={geoLocating}
+                          onClick={useCurrentLocation}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
+                        >
+                          {geoLocating
+                            ? <><i className="ph ph-spinner ph-spin"></i> Locating...</>
+                            : <><i className="ph ph-crosshair"></i> Use Current Location</>
+                          }
+                        </button>
                      </div>
 
                      <div style={{ height: '240px', width: '100%', borderRadius: 'var(--r-md)', overflow: 'hidden', border: '1px solid var(--bg-highlight)' }}>
