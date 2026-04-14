@@ -13,7 +13,7 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const UNILUS_COORDS = { lat: -15.3522, lng: 28.4552 };
+const UNILUS_COORDS = { lat: -15.3560, lng: 28.4702 };
 
 function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
   var R = 6371; 
@@ -220,6 +220,8 @@ export default function Landlord() {
         description: formData.desc,
         distance_text: formData.distance,
         distance_meters: distanceMeters || parseInt(formData.distance) || 0,
+        latitude: mapPosition?.lat || null,
+        longitude: mapPosition?.lng || null,
         amenities: selectedAmenities,
         images: FinalImageUrls,
         contact_number: formData.phone || null,

@@ -343,19 +343,23 @@ export default function Listing() {
 
              {listing.contact_number || listing.profiles?.phone_number ? (
                 <>
-                  <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
+                  <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
                    <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> WhatsApp Landlord
                   </a>
-                  <div style={{ textAlign: 'center', color: 'var(--white)', fontSize: '1.1rem', fontWeight: 600, padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)' }}>
+                  <div style={{ textAlign: 'center', color: 'var(--white)', fontSize: '1.1rem', fontWeight: 600, padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
                     <i className="ph ph-phone" style={{ marginRight: '8px', color: 'var(--text-muted)' }}></i>
                     {listing.contact_number || listing.profiles.phone_number}
                   </div>
                 </>
              ) : (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)' }}>
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
                   Phone number not provided
                 </div>
              )}
+
+             <a href={`https://www.google.com/maps/dir/?api=1&destination=${(listing.latitude && listing.longitude) ? `${listing.latitude},${listing.longitude}` : encodeURIComponent((listing.area || 'Silverest') + ', Lusaka, Zambia')}&travelmode=walking`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex' }}>
+               <i className="ph ph-person-simple-walk" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> Get Walking Directions
+             </a>
              
              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--bg-highlight)' }}>
                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 600 }}>
