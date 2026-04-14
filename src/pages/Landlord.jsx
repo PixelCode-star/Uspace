@@ -38,7 +38,11 @@ const AMENITIES_LIST = [
   { id: 'Shared Kitchen', icon: 'ph ph-cooking-pot' },
   { id: 'Study Room', icon: 'ph ph-books' },
   { id: 'Gym', icon: 'ph ph-barbell' },
-  { id: 'Parking', icon: 'ph ph-car-profile' }
+  { id: 'Parking', icon: 'ph ph-car-profile' },
+  { id: 'Transport Included', icon: 'ph ph-bus' },
+  { id: 'Meals Provided', icon: 'ph ph-fork-knife' },
+  { id: 'Female Only', icon: 'ph ph-gender-female' },
+  { id: 'Male Only', icon: 'ph ph-gender-male' }
 ];
 
 export default function Landlord() {
