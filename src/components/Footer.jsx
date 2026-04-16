@@ -10,6 +10,25 @@ export default function Footer() {
             <p className="text-muted" style={{ maxWidth: '280px', marginBottom: '24px' }}>
               The student housing marketplace built by Unilus students, for Unilus students. Silverest, Lusaka, Zambia.
             </p>
+            {/* Social Links */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <a 
+                href="https://instagram.com/uspacehousing" 
+                target="_blank" 
+                rel="noreferrer" 
+                title="Follow us on Instagram"
+                style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: 'var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--text-muted)', fontSize: '1.2rem', transition: 'all 0.25s ease',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-highlight)'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                <i className="ph ph-instagram-logo"></i>
+              </a>
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h4 style={{ marginBottom: '8px' }}>Explore</h4>
@@ -22,6 +41,12 @@ export default function Footer() {
             <Link to="/landlord" className="text-muted">List Your Space</Link>
             <Link to="/landlord" className="text-muted">Manage Listings</Link>
             <span className="text-muted">Pricing (Free!)</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <h4 style={{ marginBottom: '8px' }}>Connect</h4>
+            <a href="https://instagram.com/uspacehousing" target="_blank" rel="noreferrer" className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s' }}>
+              <i className="ph ph-instagram-logo" style={{ color: 'var(--green)' }}></i> @uspacehousing
+            </a>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', paddingTop: '32px', borderTop: '1px solid var(--bg-highlight)', color: 'var(--text-faint)' }}>

@@ -56,7 +56,17 @@ CREATE TABLE public.bookings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Reviews Table
+-- 6. Waitlists Table (For Notifications when available)
+CREATE TABLE public.waitlists (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  listing_id UUID REFERENCES public.listings(id) ON DELETE CASCADE NOT NULL,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(student_id, listing_id)
+);
+
+-- 7. Reviews Table
 CREATE TABLE public.reviews (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   listing_id UUID REFERENCES public.listings(id) ON DELETE CASCADE NOT NULL,
@@ -81,6 +91,14 @@ CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR 
 CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
+-- Waitlists: Students manage their own, Landlords view for their listings
+CREATE POLICY "Students can view own waitlists" ON public.waitlists FOR SELECT USING (auth.uid() = student_id);
+CREATE POLICY "Students can insert own waitlists" ON public.waitlists FOR INSERT WITH CHECK (auth.uid() = student_id);
+CREATE POLICY "Students can delete own waitlists" ON public.waitlists FOR DELETE USING (auth.uid() = student_id);
+CREATE POLICY "Landlords can view waitlists for their listings" ON public.waitlists FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.listings WHERE id = listing_id AND landlord_id = auth.uid())
+);
+
 -- Listings: Anyone can read active listings, Landlords manage their own
 CREATE POLICY "Active listings are viewable by everyone" ON public.listings FOR SELECT USING (is_active = true);
 CREATE POLICY "Landlords can insert their own listings" ON public.listings FOR INSERT WITH CHECK (auth.uid() = landlord_id);
@@ -91,10 +109,11 @@ CREATE POLICY "Landlords can delete own listings" ON public.listings FOR DELETE 
 CREATE POLICY "Students can view own bookings" ON public.bookings FOR SELECT USING (auth.uid() = student_id);
 CREATE POLICY "Students can insert own bookings" ON public.bookings FOR INSERT WITH CHECK (auth.uid() = student_id);
 
--- Reviews: Viewable by all, Students can insert/update their own
+-- Reviews: Viewable by all, Students can insert/update/delete their own
 CREATE POLICY "Reviews are viewable by everyone" ON public.reviews FOR SELECT USING (true);
 CREATE POLICY "Students can insert their own reviews" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = student_id);
 CREATE POLICY "Students can update own reviews" ON public.reviews FOR UPDATE USING (auth.uid() = student_id);
+CREATE POLICY "Students can delete own reviews" ON public.reviews FOR DELETE USING (auth.uid() = student_id);
 
 -- ==========================================
 -- TRIGGERS & FUNCTIONS
@@ -113,6 +132,23 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Trigger to recalculate rating and review count when reviews are added/updated/deleted
+CREATE OR REPLACE FUNCTION public.update_listing_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.listings
+  SET 
+    rating = COALESCE((SELECT ROUND(AVG(rating)::numeric, 1) FROM public.reviews WHERE listing_id = COALESCE(NEW.listing_id, OLD.listing_id)), 0.0),
+    review_count = COALESCE((SELECT COUNT(*) FROM public.reviews WHERE listing_id = COALESCE(NEW.listing_id, OLD.listing_id)), 0)
+  WHERE id = COALESCE(NEW.listing_id, OLD.listing_id);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_review_changed
+  AFTER INSERT OR UPDATE OR DELETE ON public.reviews
+  FOR EACH ROW EXECUTE PROCEDURE public.update_listing_rating();
 
 -- ==========================================
 -- SUPABASE STORAGE BUCKET CONFIGURATION

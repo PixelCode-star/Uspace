@@ -109,6 +109,17 @@ export const SupabaseAPI = {
     return { data, error };
   },
 
+  async deleteReview(reviewId) {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return { error: { message: "Not logged in" } };
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', reviewId)
+      .eq('student_id', user.user.id);
+    return { error };
+  },
+
   async getStudentBookings() {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return { data: [] };
@@ -127,6 +138,29 @@ export const SupabaseAPI = {
       .select('*')
       .in('id', ids);
     return { data, error };
+  },
+
+  async joinWaitlist(listingId) {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return { error: { message: "Not logged in" } };
+    const { data, error } = await supabase
+      .from('waitlists')
+      .insert([{ student_id: user.user.id, listing_id: listingId }]);
+    return { data, error };
+  },
+
+  async checkWaitlistStatus(listingId) {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return { data: false };
+    const { data, error } = await supabase
+      .from('waitlists')
+      .select('id')
+      .eq('student_id', user.user.id)
+      .eq('listing_id', listingId)
+      .single();
+    
+    // If we find a row, the status is true
+    return { data: !!data, error: null };
   },
 
   // --- LANDLORD ACTIONS ---

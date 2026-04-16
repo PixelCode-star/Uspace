@@ -19,6 +19,7 @@ export default function Listing() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [isOnWaitlist, setIsOnWaitlist] = useState(false);
 
   const handleSubmitReview = async () => {
     if (reviewRating === 0 || !reviewComment.trim()) {
@@ -48,6 +49,11 @@ export default function Listing() {
         const { data, error } = await SupabaseAPI.getListingById(id);
         if (error) throw error;
         setListing(data);
+        
+        if (user && data.available_rooms === 0) {
+          const { data: waitl } = await SupabaseAPI.checkWaitlistStatus(data.id);
+          setIsOnWaitlist(waitl);
+        }
       } catch (err) {
         console.error(err);
         setError("Listing not found or unavailable.");
@@ -56,7 +62,7 @@ export default function Listing() {
       }
     };
     fetchDoc();
-  }, [id]);
+  }, [id, user]);
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '100px', color: 'var(--green)' }}><i className="ph ph-spinner ph-spin" style={{fontSize: '3rem'}}></i></div>;
@@ -317,29 +323,54 @@ export default function Listing() {
                  </div>
                )}
              </div>
-             
-             <button id="bookBtn" className="btn btn-primary w-full" style={{ marginBottom: '16px' }} onClick={async (e) => {
-               if(!user) {
-                 window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
-                 return;
-               }
-               const btn = e.currentTarget;
-               btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Sending...';
-               btn.disabled = true;
-               
-               const { error } = await SupabaseAPI.requestBooking(listing.id, 'viewing');
-               if (error) {
-                 window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Booking Failed', message: error.message } }));
-                 btn.innerHTML = 'Request to Book';
-                 btn.disabled = false;
-               } else {
-                 btn.innerHTML = '<i class="ph ph-check-circle"></i> Request Sent!';
-                 btn.style.background = 'var(--bg-highlight)';
-                 btn.style.color = 'var(--white)';
-               }
-             }}>
-               Request to Book
-             </button>
+             {listing.available_rooms === 0 ? (
+               <button id="waitlistBtn" className="btn w-full" style={{ marginBottom: '16px', background: isOnWaitlist ? 'var(--bg-highlight)' : 'var(--bg-base)', border: '1px solid var(--green)', color: isOnWaitlist ? 'var(--white)' : 'var(--green)' }} onClick={async (e) => {
+                 if(!user) {
+                   window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+                   return;
+                 }
+                 if(isOnWaitlist) return; // already in waitlist
+                 
+                 const btn = e.currentTarget;
+                 btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subscribing...';
+                 btn.disabled = true;
+                 
+                 const { error } = await SupabaseAPI.joinWaitlist(listing.id);
+                 if (error && error.code !== '23505') { // 23505 is unique constraint violation
+                   window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Error', message: error.message } }));
+                   btn.innerHTML = '<i class="ph ph-bell-ringing"></i> Notify Me When Available';
+                   btn.disabled = false;
+                 } else {
+                   setIsOnWaitlist(true);
+                   window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Subscribed', message: 'You will receive a notification when a room becomes available!' } }));
+                 }
+               }}>
+                 {isOnWaitlist ? <><i className="ph ph-check-circle"></i> Following for Updates</> : <><i className="ph ph-bell-ringing"></i> Notify Me When Available</>}
+               </button>
+             ) : (
+               <button id="bookBtn" className="btn btn-primary w-full" style={{ marginBottom: '16px' }} onClick={async (e) => {
+                 if(!user) {
+                   window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+                   return;
+                 }
+                 const btn = e.currentTarget;
+                 btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Sending...';
+                 btn.disabled = true;
+                 
+                 const { error } = await SupabaseAPI.requestBooking(listing.id, 'viewing');
+                 if (error) {
+                   window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Booking Failed', message: error.message } }));
+                   btn.innerHTML = 'Request to Book';
+                   btn.disabled = false;
+                 } else {
+                   btn.innerHTML = '<i class="ph ph-check-circle"></i> Request Sent!';
+                   btn.style.background = 'var(--bg-highlight)';
+                   btn.style.color = 'var(--white)';
+                 }
+               }}>
+                 Request to Book
+               </button>
+             )}
 
              {listing.contact_number || listing.profiles?.phone_number ? (
                 <>
@@ -397,7 +428,22 @@ export default function Listing() {
         ) : (
           <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
             {listing.reviews.map((r) => (
-              <div key={r.id} style={{ background: 'var(--bg-elevated)', padding: '24px', borderRadius: 'var(--r-xl)' }}>
+              <div key={r.id} style={{ background: 'var(--bg-elevated)', padding: '24px', borderRadius: 'var(--r-xl)', position: 'relative' }}>
+                {user?.id === r.student_id && (
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Delete your review?')) {
+                        await SupabaseAPI.deleteReview(r.id);
+                        const { data } = await SupabaseAPI.getListingById(id);
+                        setListing(data);
+                      }
+                    }}
+                    style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px', opacity: 0.8, fontSize: '1.2rem' }}
+                    title="Delete Review"
+                  >
+                    <i className="ph ph-trash"></i>
+                  </button>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
                     {r.profiles?.full_name?.charAt(0) || 'S'}
