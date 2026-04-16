@@ -326,7 +326,7 @@ export default function Landlord() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
         
         {/* SIDEBAR */}
-        <aside style={{ width: '250px', flexShrink: 0 }}>
+        <aside style={{ flex: '1 1 250px', maxWidth: '300px' }}>
           <div style={{ padding: '24px', background: 'var(--bg-elevated)', borderRadius: 'var(--r-lg)', marginBottom: '16px' }}>
              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, marginBottom: '16px' }}>
                {user.initials}
@@ -344,7 +344,7 @@ export default function Landlord() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: '1 1 300px', minWidth: 0, maxWidth: '100%' }}>
 
             {activeTab === 'add' && (
               <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--bg-highlight)', borderRadius: 'var(--r-xl)', padding: '32px' }}>
@@ -394,8 +394,15 @@ export default function Landlord() {
                          }
                        }} />
                        <button type="button" id="mapSearchBtn" className="btn btn-outline" onClick={() => {
-                          const val = document.getElementById('mapSearch').value;
+                          const val = document.getElementById('mapSearch').value.trim();
                           if(val) {
+                            const coordsMatch = val.match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
+                            if (coordsMatch) {
+                              const lat = parseFloat(coordsMatch[1]);
+                              const lng = parseFloat(coordsMatch[3]);
+                              updateMapPin(lat, lng);
+                              return;
+                            }
                             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
                               .then(r => r.json())
                               .then(data => {
@@ -407,7 +414,7 @@ export default function Landlord() {
                                 }
                               });
                           }
-                       }}>Search</button>
+                       }}>Search / Paste Coords</button>
                        <button
                           type="button"
                           className="btn btn-primary"
@@ -437,13 +444,40 @@ export default function Landlord() {
                  </div>
 
                  <h3 style={{ marginBottom: '16px' }}>Amenities</h3>
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '32px' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                    {AMENITIES_LIST.map(a => (
                      <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                        <input type="checkbox" checked={selectedAmenities.includes(a.id)} onChange={() => toggleAmenity(a.id)} style={{ accentColor: 'var(--green)', width: '18px', height: '18px' }} />
                        <i className={a.icon} style={{ color: 'var(--text-faint)' }}></i> {a.id}
                      </label>
                    ))}
+                   {selectedAmenities.filter(a => !AMENITIES_LIST.find(am => am.id === a)).map(a => (
+                     <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                       <input type="checkbox" checked={true} onChange={() => toggleAmenity(a)} style={{ accentColor: 'var(--green)', width: '18px', height: '18px' }} />
+                       <i className="ph ph-check-square" style={{ color: 'var(--green)' }}></i> {a}
+                     </label>
+                   ))}
+                 </div>
+                 
+                 <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', maxWidth: '400px' }}>
+                    <input type="text" id="customAmenity" className="form-input" placeholder="Add custom amenity (e.g. Swimming Pool)" onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.target.value.trim();
+                        if (val && !selectedAmenities.includes(val)) {
+                          setSelectedAmenities(prev => [...prev, val]);
+                        }
+                        e.target.value = '';
+                      }
+                    }} />
+                    <button type="button" className="btn btn-outline" onClick={() => {
+                      const input = document.getElementById('customAmenity');
+                      const val = input.value.trim();
+                      if (val && !selectedAmenities.includes(val)) {
+                        setSelectedAmenities(prev => [...prev, val]);
+                      }
+                      input.value = '';
+                    }}>Add</button>
                  </div>
 
                  <h3 style={{ marginBottom: '16px' }}>Photos (First photo is the cover)</h3>
