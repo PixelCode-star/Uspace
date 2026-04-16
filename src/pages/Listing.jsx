@@ -433,7 +433,11 @@ export default function Listing() {
                   <button 
                     onClick={async () => {
                       if (window.confirm('Delete your review?')) {
-                        await SupabaseAPI.deleteReview(r.id);
+                        const { error } = await SupabaseAPI.deleteReview(r.id);
+                        if (error) {
+                          window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Delete Failed', message: error.message } }));
+                          return;
+                        }
                         const { data } = await SupabaseAPI.getListingById(id);
                         setListing(data);
                       }
