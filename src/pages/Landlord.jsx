@@ -120,9 +120,13 @@ export default function Landlord() {
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
+      if (user.role === 'student') {
+        navigate('/dashboard');
+      } else {
+        fetchDashboardData();
+      }
     }
-  }, [user]);
+  }, [user, navigate]);
 
   const fetchDashboardData = async () => {
     setLoadingData(true);

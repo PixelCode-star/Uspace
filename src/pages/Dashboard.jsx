@@ -14,8 +14,9 @@ export default function Dashboard() {
   const [loadingContent, setLoadingContent] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
+    if (!authLoading) {
+      if (!user) navigate('/');
+      else if (user.role === 'landlord') navigate('/landlord');
     }
   }, [user, authLoading, navigate]);
 

@@ -59,9 +59,18 @@ export default function Navbar() {
           
           <div className="navbar__nav">
             <Link to="/" className={isActive('/') ? 'active' : ''}>Home</Link>
-            <Link to="/browse" className={isActive('/browse') ? 'active' : ''}>Browse</Link>
-            <a href="/#how-it-works" onClick={handleHowItWorks} style={{ cursor: 'pointer' }}>How it Works</a>
-            <Link to="/landlord" className={isActive('/landlord') ? 'active' : ''}>List Your Space</Link>
+            {(!user || user.role !== 'landlord') && (
+              <>
+                <Link to="/browse" className={isActive('/browse') ? 'active' : ''}>Browse</Link>
+                <a href="/#how-it-works" onClick={handleHowItWorks} style={{ cursor: 'pointer' }}>How it Works</a>
+              </>
+            )}
+            {user?.role === 'landlord' && (
+              <Link to="/landlord" className={isActive('/landlord') ? 'active' : ''}>Landlord Hub</Link>
+            )}
+            {!user && (
+              <Link to="/landlord" className={isActive('/landlord') ? 'active' : ''}>For Landlords</Link>
+            )}
           </div>
 
           <div className="navbar__actions">
@@ -124,12 +133,21 @@ export default function Navbar() {
           <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <i className="ph ph-house" style={{fontSize: '20px'}}></i> Home
           </Link>
-          <Link to="/browse" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <i className="ph ph-magnifying-glass" style={{fontSize: '20px'}}></i> Browse Spaces
-          </Link>
-          <Link to="/landlord" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <i className="ph ph-clipboard-text" style={{fontSize: '20px'}}></i> List Your Space
-          </Link>
+          {(!user || user.role !== 'landlord') && (
+            <Link to="/browse" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <i className="ph ph-magnifying-glass" style={{fontSize: '20px'}}></i> Browse Spaces
+            </Link>
+          )}
+          {user?.role === 'landlord' && (
+            <Link to="/landlord" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <i className="ph ph-briefcase" style={{fontSize: '20px'}}></i> Landlord Hub
+            </Link>
+          )}
+          {!user && (
+            <Link to="/landlord" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <i className="ph ph-clipboard-text" style={{fontSize: '20px'}}></i> For Landlords
+            </Link>
+          )}
           {user ? (
             <Link to={dashboardLink} onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <i className="ph ph-user" style={{fontSize: '20px'}}></i> My Dashboard

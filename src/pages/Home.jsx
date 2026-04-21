@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SupabaseAPI } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import ListingCard from '../components/ListingCard';
 
 
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -234,8 +236,9 @@ export default function Home() {
       </section>
 
       {/* ========== CTA BANNER ========== */}
-      <section style={{ padding: '0 0 80px' }}>
-        <div className="container">
+      {user?.role !== 'student' && (
+        <section style={{ padding: '0 0 80px' }}>
+          <div className="container">
           <div className="reveal" style={{ 
             background: 'linear-gradient(135deg, rgba(30,215,96,0.2) 0%, rgba(30,215,96,0.05) 100%)', 
             border: '1px solid var(--green)',
@@ -252,9 +255,10 @@ export default function Home() {
               <p style={{ color: 'var(--text-muted)', maxWidth: '460px' }}>List your boarding house on Uspace for <strong style={{ color: 'var(--white)' }}>FREE</strong> during Early Access. Reach thousands of Unilus students without lifting a finger.</p>
             </div>
             <button onClick={() => navigate('/landlord')} className="btn btn-primary btn-lg" style={{ flexShrink: 0 }}>List Your Space Free →</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
