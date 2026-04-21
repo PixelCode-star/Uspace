@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { SupabaseAPI } from '../lib/supabase';
 import ListingCard from '../components/ListingCard';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -27,6 +28,9 @@ const CATEGORIES = [
 
 export default function Browse() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const hasPremiumAccess = user && (user.role === 'landlord' || user.hasPaid);
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,6 +252,14 @@ export default function Browse() {
           </div>
 
           {viewMode === 'map' ? (
+            !hasPremiumAccess ? (
+               <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', border: '1px solid var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexDirection: 'column', textAlign: 'center', padding: '40px' }}>
+                 <i className="ph ph-map-trifold" style={{ fontSize: '4rem', color: 'var(--text-faint)', marginBottom: '16px' }}></i>
+                 <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Map View Locked</h3>
+                 <p className="text-muted" style={{ maxWidth: '400px', marginBottom: '24px' }}>Pay K50 on any listing page to instantly unlock exact property locations and the interactive map view.</p>
+                 <button className="btn btn-outline" onClick={() => setViewMode('list')}>Back to List View</button>
+               </div>
+            ) : (
             <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', overflow: 'hidden', border: '1px solid var(--bg-highlight)' }}>
               <MapContainer center={UNILUS_COORDS} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%', zIndex: 1 }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -277,6 +289,7 @@ export default function Browse() {
                 })}
               </MapContainer>
             </div>
+            )
           ) : (
             <div className="listing-grid">
               {loading ? (

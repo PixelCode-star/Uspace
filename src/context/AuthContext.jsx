@@ -63,7 +63,8 @@ export function AuthProvider({ children }) {
       fullName,
       name: firstName,
       initials: firstName.slice(0, 2).toUpperCase(),
-      role: authUser.user_metadata?.role || 'student'
+      role: authUser.user_metadata?.role || 'student',
+      hasPaid: authUser.user_metadata?.has_paid || false
     });
 
     const rawPhone = authUser.user_metadata?.phone_number;

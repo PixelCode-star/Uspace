@@ -11,6 +11,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -25,9 +26,9 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     
     try {
       if (tab === 'signup') {
-        if (!name || !email || !password || !phone.trim()) throw new Error('Please fill all fields, including your phone number');
+        if (!name || !email || !password || !phone.trim() || !role) throw new Error('Please fill all fields, including your phone number and role');
         if (password.length < 6) throw new Error('Password must be at least 6 characters');
-        const { data, error } = await SupabaseAPI.signUp(email, password, name, 'student', phone);
+        const { data, error } = await SupabaseAPI.signUp(email, password, name, role, phone);
         if (error) throw error;
         if (data.user && data.user.identities && data.user.identities.length === 0) {
            throw new Error('Email already in use.');
@@ -88,6 +89,25 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
         <form onSubmit={handleSubmit}>
           {tab === 'signup' && (
             <>
+              <div className="form-group">
+                <label>I am a...</label>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setRole('student')}
+                    style={{ flex: 1, padding: '12px', borderRadius: 'var(--r-md)', border: role === 'student' ? '2px solid var(--green)' : '1px solid var(--bg-highlight)', background: role === 'student' ? 'rgba(30,215,96,0.1)' : 'var(--bg-base)', color: role === 'student' ? 'var(--green)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
+                  >
+                    <i className="ph ph-student" style={{ marginRight: '8px', fontSize: '1.2rem' }}></i> Student
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setRole('landlord')}
+                    style={{ flex: 1, padding: '12px', borderRadius: 'var(--r-md)', border: role === 'landlord' ? '2px solid var(--green)' : '1px solid var(--bg-highlight)', background: role === 'landlord' ? 'rgba(30,215,96,0.1)' : 'var(--bg-base)', color: role === 'landlord' ? 'var(--green)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
+                  >
+                    <i className="ph ph-house" style={{ marginRight: '8px', fontSize: '1.2rem' }}></i> Landlord
+                  </button>
+                </div>
+              </div>
               <div className="form-group">
                 <label>Full Name</label>
                 <input type="text" value={name} onChange={e=>setName(e.target.value)} className="form-input" placeholder="e.g. Thandiwe Mwansa" />

@@ -34,7 +34,7 @@ export const SupabaseAPI = {
   // --- LISTINGS ---
   async getFeaturedListings() {
     const { data, error } = await supabase
-      .from('listings')
+      .from('secure_listings')
       .select('*, profiles(full_name, phone_number)')
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false }) // Prioritize rated properties
@@ -44,7 +44,7 @@ export const SupabaseAPI = {
 
   async searchListings({ search, maxPrice, maxDistance, verified, amenities }) {
     let query = supabase
-      .from('listings')
+      .from('secure_listings')
       .select('*, profiles(full_name, phone_number)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
@@ -74,7 +74,7 @@ export const SupabaseAPI = {
 
   async getAllListings() {
     const { data, error } = await supabase
-      .from('listings')
+      .from('secure_listings')
       .select('*, profiles(full_name, phone_number)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
@@ -83,7 +83,7 @@ export const SupabaseAPI = {
 
   async getListingById(id) {
     const { data, error } = await supabase
-      .from('listings')
+      .from('secure_listings')
       .select('*, profiles(full_name, phone_number), reviews(*, profiles(full_name, avatar_url))')
       .eq('id', id)
       .single();
@@ -134,7 +134,7 @@ export const SupabaseAPI = {
   async getListingsByIds(ids) {
     if (!ids || ids.length === 0) return { data: [] };
     const { data, error } = await supabase
-      .from('listings')
+      .from('secure_listings')
       .select('*')
       .in('id', ids);
     return { data, error };
@@ -224,6 +224,13 @@ export const SupabaseAPI = {
   },
 
   // --- PROFILE ---
+  async unlockPremium() {
+    const { data, error } = await supabase.auth.updateUser({
+      data: { has_paid: true }
+    });
+    return { data, error };
+  },
+
   async updateProfile(updates) {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return { error: { message: "Not logged in" } };

@@ -21,6 +21,49 @@ export default function Listing() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isOnWaitlist, setIsOnWaitlist] = useState(false);
 
+  const hasPremiumAccess = user && (user.role === 'landlord' || user.hasPaid);
+  const [showPaymentFlow, setShowPaymentFlow] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const triggerMobileMoneyPrompt = async () => {
+    if (!mobileNumber || mobileNumber.length < 9) {
+      window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Invalid Number', message: 'Please enter a valid 10-digit mobile money number (e.g., 096/097/095).' } }));
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    // ==========================================
+    // THIS IS WHERE YOU CONNECT THE SPARCO API LATER
+    // For now, we mock the success of the MoMo Push prompt!
+    // ==========================================
+    
+    // Simulate the time it takes for the user to approve the pin on their phone
+    setTimeout(async () => {
+      try {
+        const { error } = await SupabaseAPI.unlockPremium();
+        if (error) throw error;
+        
+        setProcessingPayment(false);
+        setShowPaymentFlow(false);
+        window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Payment Successful', message: 'K50 Received! Your premium access has been unlocked.' } }));
+        setTimeout(() => window.location.reload(), 1500);
+      } catch(err) {
+        setProcessingPayment(false);
+        window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Network Error', message: err.message } }));
+      }
+    }, 3000); // Exaggerated delay to simulate the USSD push to the user's phone
+  };
+
+  const handleUnlockClick = () => {
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+      return;
+    }
+    setShowPaymentFlow(true);
+  };
+
   const handleSubmitReview = async () => {
     if (reviewRating === 0 || !reviewComment.trim()) {
       window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Please provide a rating and comment' } }));
@@ -238,7 +281,7 @@ export default function Listing() {
                       </div>
                     )}
                     {/* CTA */}
-                    {waMsg ? (
+                    {hasPremiumAccess && waMsg ? (
                       <a
                         href={waMsg}
                         target="_blank"
@@ -252,17 +295,21 @@ export default function Listing() {
                     ) : (
                       <button
                         className={isLowest ? 'btn btn-primary' : 'btn btn-outline'}
-                        style={{ marginTop: 'auto' }}
+                        style={{ marginTop: 'auto', background: !hasPremiumAccess ? 'var(--bg-highlight)' : undefined, color: !hasPremiumAccess ? 'var(--text-muted)' : undefined, borderColor: !hasPremiumAccess ? 'transparent' : undefined }}
                         onClick={() => {
                           if (!user) {
                             window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+                            return;
+                          }
+                          if (!hasPremiumAccess) {
+                            handleUnlockClick();
                             return;
                           }
                           SupabaseAPI.requestBooking(listing.id, 'viewing');
                           window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Viewing request sent! The landlord will contact you.' } }));
                         }}
                       >
-                        Request Viewing
+                        {hasPremiumAccess ? 'Request Viewing' : <><i className="ph ph-lock-key"></i> Unlock Contact</>}
                       </button>
                     )}
                   </div>
@@ -370,28 +417,59 @@ export default function Listing() {
                }}>
                  Request to Book
                </button>
-             )}
-
-             {listing.contact_number || listing.profiles?.phone_number ? (
-                <>
-                  <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
-                   <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> WhatsApp Landlord
-                  </a>
-                  <div style={{ textAlign: 'center', color: 'var(--white)', fontSize: '1.1rem', fontWeight: 600, padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
-                    <i className="ph ph-phone" style={{ marginRight: '8px', color: 'var(--text-muted)' }}></i>
-                    {listing.contact_number || listing.profiles.phone_number}
-                  </div>
-                </>
+                        {hasPremiumAccess ? (
+               <>
+                 {listing.contact_number || listing.profiles?.phone_number ? (
+                    <>
+                      <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
+                       <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> WhatsApp Landlord
+                      </a>
+                      <div style={{ textAlign: 'center', color: 'var(--white)', fontSize: '1.1rem', fontWeight: 600, padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
+                        <i className="ph ph-phone" style={{ marginRight: '8px', color: 'var(--text-muted)' }}></i>
+                        {listing.contact_number || listing.profiles.phone_number}
+                      </div>
+                    </>
+                 ) : (
+                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
+                      Phone number not provided
+                    </div>
+                 )}
+                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${(listing.latitude && listing.longitude) ? `${listing.latitude},${listing.longitude}` : encodeURIComponent((listing.area || 'Silverest') + ', Lusaka, Zambia')}&travelmode=walking`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex' }}>
+                   <i className="ph ph-person-simple-walk" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> Get Walking Directions
+                 </a>
+               </>
              ) : (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--r-md)', marginBottom: '12px' }}>
-                  Phone number not provided
-                </div>
+               <div style={{ background: 'rgba(30,215,96,0.1)', border: '1px solid var(--green)', padding: '20px', borderRadius: 'var(--r-md)', textAlign: 'center', marginTop: '16px' }}>
+                 <i className="ph ph-lock-key" style={{ fontSize: '2.5rem', color: 'var(--green)', marginBottom: '12px' }}></i>
+                 <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px', color: 'var(--white)' }}>Unlock Premium Details</div>
+                 <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>Pay a one-time fee of <strong>K50</strong> to get direct landlord contact info, WhatsApp links, and exact walking directions.</div>
+                 <button id="unlock-btn" className="btn btn-primary w-full" onClick={handleUnlockClick}>Pay K50 to Unlock</button>
+               </div>
+             )}
+             
+             {/* NATIVE SPARCO MOBILE MONEY CHECKOUT FLOW */}
+             {showPaymentFlow && !hasPremiumAccess && (
+               <div style={{ marginTop: '16px', background: 'var(--bg-elevated)', border: '1px solid var(--bg-highlight)', padding: '20px', borderRadius: 'var(--r-md)' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                   <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Mobile Money Payment</h4>
+                   <button className="btn btn-ghost" style={{ padding: '4px' }} onClick={() => setShowPaymentFlow(false)}>✕</button>
+                 </div>
+                 <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '16px' }}>Enter your MTN or Airtel Mobile Money number. A prompt will be sent instantly to your phone for the <strong>K50</strong> deduction.</p>
+                 
+                 <div className="form-group" style={{ marginBottom: '16px' }}>
+                   <label>Mobile Money Number</label>
+                   <div style={{ position: 'relative' }}>
+                     <span style={{ position: 'absolute', left: '16px', top: '14px', color: 'var(--text-muted)' }}>+260</span>
+                     <input type="tel" className="form-input" placeholder="97XXXXXXX" maxLength="9" style={{ paddingLeft: '64px' }} value={mobileNumber} onChange={e => setMobileNumber(e.target.value.replace(/\D/g, ''))} disabled={processingPayment} />
+                   </div>
+                 </div>
+                 
+                 <button className="btn btn-primary w-full" style={{ display: 'flex', justifyContent: 'center', background: 'var(--green)', color: '#000' }} onClick={triggerMobileMoneyPrompt} disabled={processingPayment}>
+                   {processingPayment ? <><i className="ph ph-spinner ph-spin" style={{ marginRight: '8px' }}></i> Waiting for Phone Approval...</> : 'Send Payment Prompt to Phone'}
+                 </button>
+               </div>
              )}
 
-             <a href={`https://www.google.com/maps/dir/?api=1&destination=${(listing.latitude && listing.longitude) ? `${listing.latitude},${listing.longitude}` : encodeURIComponent((listing.area || 'Silverest') + ', Lusaka, Zambia')}&travelmode=walking`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex' }}>
-               <i className="ph ph-person-simple-walk" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> Get Walking Directions
-             </a>
-             
              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--bg-highlight)' }}>
                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 600 }}>
                  {listing.profiles?.full_name?.charAt(0) || 'L'}
