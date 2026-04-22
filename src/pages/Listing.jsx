@@ -227,7 +227,7 @@ export default function Listing() {
 
       {/* ===== AVAILABLE PLANS ===== */}
       {listing.room_types && listing.room_types.length > 0 && (() => {
-        const phone = listing.contact_number || listing.profiles?.phone_number;
+        const phone = hasPremiumAccess ? (listing.contact_number || listing.profiles?.phone_number) : null;
         const waBase = phone ? `https://wa.me/${phone.replace(/\D/g,'')}` : null;
         return (
           <div style={{ marginBottom: '48px' }}>
@@ -429,9 +429,10 @@ export default function Listing() {
                }}>
                  {hasPremiumAccess ? 'Request to Book' : <><i className="ph ph-lock-key"></i> Unlock to Book</>}
                 </button>
-                        {hasPremiumAccess ? (
+             )}
+             {hasPremiumAccess ? (
                <>
-                 {listing.contact_number || listing.profiles?.phone_number ? (
+                  {hasPremiumAccess && (listing.contact_number || listing.profiles?.phone_number) ? (
                     <>
                       <a href={`https://wa.me/${(listing.contact_number || listing.profiles.phone_number).replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-outline w-full" style={{ display: 'flex', marginBottom: '12px' }}>
                        <i className="ph ph-whatsapp-logo" style={{ marginRight: '8px', fontSize: '1.2rem', color: 'var(--green)' }}></i> WhatsApp Landlord

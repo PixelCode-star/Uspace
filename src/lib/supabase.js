@@ -44,7 +44,7 @@ export const SupabaseAPI = {
   async getFeaturedListings() {
     const { data, error } = await supabase
       .from('secure_listings')
-      .select('*, profiles(full_name, phone_number)')
+      .select('*, profiles(full_name)')
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false }) // Prioritize rated properties
       .limit(6);
@@ -54,7 +54,7 @@ export const SupabaseAPI = {
   async searchListings({ search, maxPrice, maxDistance, verified, amenities }) {
     let query = supabase
       .from('secure_listings')
-      .select('*, profiles(full_name, phone_number)')
+      .select('*, profiles(full_name)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
@@ -84,7 +84,7 @@ export const SupabaseAPI = {
   async getAllListings() {
     const { data, error } = await supabase
       .from('secure_listings')
-      .select('*, profiles(full_name, phone_number)')
+      .select('*, profiles(full_name)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     return { data, error };
