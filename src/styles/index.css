@@ -620,19 +620,24 @@ h3 { font-size: 1.5rem; }
 /* ---- Browse: pills strip + layout (no page-level horizontal scroll) ---- */
 .browse-pills-strip {
   display: flex;
-  overflow-x: auto;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   padding-bottom: 24px;
   margin-bottom: 32px;
   border-bottom: 1px solid var(--bg-highlight);
   max-width: 100%;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
 }
 
-.browse-pills-strip::-webkit-scrollbar {
-  display: none;
+/* On very small screens still allow horizontal scroll rather than ugly wrapping */
+@media (max-width: 480px) {
+  .browse-pills-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .browse-pills-strip::-webkit-scrollbar { display: none; }
 }
 
 .browse-layout {
