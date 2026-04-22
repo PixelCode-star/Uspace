@@ -373,9 +373,13 @@ export default function Listing() {
              {listing.available_rooms === 0 ? (
                <button id="waitlistBtn" className="btn w-full" style={{ marginBottom: '16px', background: isOnWaitlist ? 'var(--bg-highlight)' : 'var(--bg-base)', border: '1px solid var(--green)', color: isOnWaitlist ? 'var(--white)' : 'var(--green)' }} onClick={async (e) => {
                  if(!user) {
-                   window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
-                   return;
-                 }
+                    window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
+                    return;
+                  }
+                  if (!hasPremiumAccess) {
+                    handleUnlockClick();
+                    return;
+                  }
                  if(isOnWaitlist) return; // already in waitlist
                  
                  const btn = e.currentTarget;
@@ -395,7 +399,7 @@ export default function Listing() {
                  {isOnWaitlist ? <><i className="ph ph-check-circle"></i> Following for Updates</> : <><i className="ph ph-bell-ringing"></i> Notify Me When Available</>}
                </button>
              ) : (
-               <button id="bookBtn" className="btn btn-primary w-full" style={{ marginBottom: '16px' }} onClick={async (e) => {
+               <button id="bookBtn" className="btn btn-primary w-full" style={{ marginBottom: '16px', background: !hasPremiumAccess ? 'var(--bg-highlight)' : undefined, color: !hasPremiumAccess ? 'var(--text-muted)' : undefined, borderColor: !hasPremiumAccess ? 'transparent' : undefined }} onClick={async (e) => {
                  if(!user) {
                    window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
                    return;
@@ -415,8 +419,8 @@ export default function Listing() {
                    btn.style.color = 'var(--white)';
                  }
                }}>
-                 Request to Book
-               </button>
+                 {hasPremiumAccess ? 'Request to Book' : <><i className="ph ph-lock-key"></i> Unlock to Book</>}
+                </button>
                         {hasPremiumAccess ? (
                <>
                  {listing.contact_number || listing.profiles?.phone_number ? (
