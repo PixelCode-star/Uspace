@@ -452,13 +452,45 @@ export default function Listing() {
                  </a>
                </>
              ) : (
-               <div style={{ background: 'rgba(30,215,96,0.1)', border: '1px solid var(--green)', padding: '20px', borderRadius: 'var(--r-md)', textAlign: 'center', marginTop: '16px' }}>
-                 <i className="ph ph-lock-key" style={{ fontSize: '2.5rem', color: 'var(--green)', marginBottom: '12px' }}></i>
-                 <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px', color: 'var(--white)' }}>Unlock Premium Details</div>
-                 <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>Pay a one-time fee of <strong>K50</strong> to get direct landlord contact info, WhatsApp links, and exact walking directions.</div>
-                 <button id="unlock-btn" className="btn btn-primary w-full" onClick={handleUnlockClick}>Pay K50 to Unlock</button>
-               </div>
-             )}
+               <div style={{ background: 'rgba(30,215,96,0.06)', border: '1px solid rgba(30,215,96,0.45)', borderRadius: 'var(--r-xl)', marginTop: '16px', overflow: 'hidden' }}>
+                  {/* Card header */}
+                  <div style={{ background: 'rgba(30,215,96,0.12)', padding: '20px', textAlign: 'center', borderBottom: '1px solid rgba(30,215,96,0.2)' }}>
+                    <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(30,215,96,0.2)', border: '1px solid rgba(30,215,96,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                      <i className="ph-fill ph-lock-key" style={{ fontSize: '1.5rem', color: 'var(--green)' }}></i>
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--white)', marginBottom: '4px' }}>Unlock Full Access</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>One-time K50 · No recurring fees · Access forever</div>
+                  </div>
+                  {/* Feature rows */}
+                  <div style={{ padding: '8px 20px' }}>
+                    {[
+                      { icon: 'ph-fill ph-whatsapp-logo', label: 'Direct WhatsApp', sub: 'Message the landlord instantly' },
+                      { icon: 'ph-fill ph-phone', label: 'Full phone number', sub: 'Call & negotiate directly' },
+                      { icon: 'ph-fill ph-map-pin', label: 'Exact GPS location', sub: 'Walking route to campus included' },
+                      { icon: 'ph-fill ph-calendar-check', label: 'Priority booking', sub: 'Reserve your room via platform' },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(30,215,96,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <i className={item.icon} style={{ fontSize: '1.1rem', color: 'var(--green)' }}></i>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--white)', lineHeight: '1.3' }}>{item.label}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.sub}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* CTA */}
+                  <div style={{ padding: '16px 20px 20px' }}>
+                    <button id="unlock-btn" className="btn btn-primary w-full" onClick={handleUnlockClick} style={{ fontWeight: 700, fontSize: '1rem', padding: '13px' }}>
+                      <i className="ph ph-lock-open" style={{ marginRight: '8px' }}></i>Pay K50 & Unlock Now
+                    </button>
+                    <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.73rem', color: 'var(--text-faint)', letterSpacing: '0.02em' }}>
+                      🔐 Mobile Money · Instant activation
+                    </div>
+                  </div>
+                </div>
+              )}
              
              {/* NATIVE SPARCO MOBILE MONEY CHECKOUT FLOW */}
              {showPaymentFlow && !hasPremiumAccess && (

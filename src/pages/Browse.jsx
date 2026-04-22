@@ -253,15 +253,32 @@ export default function Browse() {
 
           {viewMode === 'map' ? (
             !hasPremiumAccess ? (
-               <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', border: '1px solid var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(30,215,96,0.05) 0%, rgba(10,10,10,1) 100%)', flexDirection: 'column', textAlign: 'center', padding: '40px' }}>
-                 <div style={{ padding: '24px', background: 'rgba(30,215,96,0.1)', borderRadius: 'var(--r-2xl)', marginBottom: '24px', border: '1px solid rgba(30,215,96,0.3)' }}>
-                    <i className="ph-fill ph-map-trifold" style={{ fontSize: '4rem', color: 'var(--green)', filter: 'drop-shadow(0 4px 12px rgba(30,215,96,0.4))' }}></i>
-                 </div>
-                 <h3 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '16px', color: 'var(--white)' }}>Interactive Map Locked</h3>
-                 <p className="text-muted" style={{ maxWidth: '480px', marginBottom: '24px', fontSize: '1.05rem', lineHeight: '1.6' }}>See exactly where every boarding house is located relative to Unilus campuses! Pay a one-time fee of <strong>K50</strong> to unlock this interactive map, get direct WhatsApp numbers, and access walking directions for all properties forever.</p>
-                 <div style={{ background: 'rgba(30,215,96,0.1)', padding: '12px 24px', borderRadius: '50px', border: '1px solid var(--green)', color: 'var(--green)', fontWeight: 600, marginBottom: '24px', filter: 'drop-shadow(0 4px 12px rgba(30,215,96,0.2))' }}>Open any property below to Unlock Premium</div>
-                 <button className="btn btn-ghost" onClick={() => setViewMode('list')} style={{ color: 'var(--text-muted)' }}>Back to List View</button>
+<div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', border: '1px solid rgba(30,215,96,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(30,215,96,0.04) 0%, var(--bg-elevated) 100%)', flexDirection: 'column', textAlign: 'center', padding: '40px' }}>
+               <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(30,215,96,0.15)', border: '1px solid rgba(30,215,96,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                 <i className="ph-fill ph-map-trifold" style={{ fontSize: '2.5rem', color: 'var(--green)' }}></i>
                </div>
+               <h3 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '12px', color: 'var(--white)' }}>Interactive Map Locked</h3>
+               <p style={{ color: 'var(--text-muted)', maxWidth: '420px', marginBottom: '28px', lineHeight: '1.7', fontSize: '0.95rem' }}>
+                 See exactly where every boarding house sits relative to the Unilus campus. Unlock once with <strong style={{ color: 'var(--white)' }}>K50</strong> to get:
+               </p>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '32px', width: '100%', maxWidth: '340px', textAlign: 'left' }}>
+                 {[
+                   { icon: 'ph-fill ph-map-pin', text: 'Interactive campus proximity map' },
+                   { icon: 'ph-fill ph-person-simple-walk', text: 'Walking directions to every property' },
+                   { icon: 'ph-fill ph-whatsapp-logo', text: 'Direct WhatsApp & phone numbers' },
+                   { icon: 'ph-fill ph-calendar-check', text: 'Priority booking requests' },
+                 ].map((item, i) => (
+                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'rgba(30,215,96,0.07)', borderRadius: '8px', border: '1px solid rgba(30,215,96,0.15)' }}>
+                     <i className={item.icon} style={{ color: 'var(--green)', fontSize: '1rem', flexShrink: 0 }}></i>
+                     <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{item.text}</span>
+                   </div>
+                 ))}
+               </div>
+               <p style={{ fontSize: '0.8rem', color: 'var(--text-faint)', marginBottom: '16px' }}>Open any listing below and tap "Pay K50 & Unlock Now"</p>
+               <button className="btn btn-ghost" onClick={() => setViewMode('list')} style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                 <i className="ph ph-list" style={{ marginRight: '6px' }}></i>Back to List View
+               </button>
+             </div>)
             ) : (
             <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', overflow: 'hidden', border: '1px solid var(--bg-highlight)' }}>
               <MapContainer center={UNILUS_COORDS} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%', zIndex: 1 }}>
