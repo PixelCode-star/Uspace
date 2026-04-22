@@ -29,7 +29,7 @@ const CATEGORIES = [
 export default function Browse() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const hasPremiumAccess = user && (user.role === 'landlord' || user.hasPaid);
+  const hasPremiumAccess = user && user.hasPaid;
   
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
@@ -253,11 +253,14 @@ export default function Browse() {
 
           {viewMode === 'map' ? (
             !hasPremiumAccess ? (
-               <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', border: '1px solid var(--bg-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexDirection: 'column', textAlign: 'center', padding: '40px' }}>
-                 <i className="ph ph-map-trifold" style={{ fontSize: '4rem', color: 'var(--text-faint)', marginBottom: '16px' }}></i>
-                 <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Map View Locked</h3>
-                 <p className="text-muted" style={{ maxWidth: '400px', marginBottom: '24px' }}>Pay K50 on any listing page to instantly unlock exact property locations and the interactive map view.</p>
-                 <button className="btn btn-outline" onClick={() => setViewMode('list')}>Back to List View</button>
+               <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', border: '1px solid var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(30,215,96,0.05) 0%, rgba(10,10,10,1) 100%)', flexDirection: 'column', textAlign: 'center', padding: '40px' }}>
+                 <div style={{ padding: '24px', background: 'rgba(30,215,96,0.1)', borderRadius: 'var(--r-2xl)', marginBottom: '24px', border: '1px solid rgba(30,215,96,0.3)' }}>
+                    <i className="ph-fill ph-map-trifold" style={{ fontSize: '4rem', color: 'var(--green)', filter: 'drop-shadow(0 4px 12px rgba(30,215,96,0.4))' }}></i>
+                 </div>
+                 <h3 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '16px', color: 'var(--white)' }}>Interactive Map Locked</h3>
+                 <p className="text-muted" style={{ maxWidth: '480px', marginBottom: '24px', fontSize: '1.05rem', lineHeight: '1.6' }}>See exactly where every boarding house is located relative to Unilus campuses! Pay a one-time fee of <strong>K50</strong> to unlock this interactive map, get direct WhatsApp numbers, and access walking directions for all properties forever.</p>
+                 <div style={{ background: 'rgba(30,215,96,0.1)', padding: '12px 24px', borderRadius: '50px', border: '1px solid var(--green)', color: 'var(--green)', fontWeight: 600, marginBottom: '24px', filter: 'drop-shadow(0 4px 12px rgba(30,215,96,0.2))' }}>Open any property below to Unlock Premium</div>
+                 <button className="btn btn-ghost" onClick={() => setViewMode('list')} style={{ color: 'var(--text-muted)' }}>Back to List View</button>
                </div>
             ) : (
             <div style={{ height: '70vh', width: '100%', borderRadius: 'var(--r-xl)', overflow: 'hidden', border: '1px solid var(--bg-highlight)' }}>

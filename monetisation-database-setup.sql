@@ -11,9 +11,8 @@ ALTER TABLE public.profiles
 ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'student';
 
 -- 2. Create a secure view to protect the raw contact numbers and GPS coordinates
--- This ensures that even if a student inspects the network tab, the data physically isn't there unless paid.
--- Landlords ALWAYS see contact info (they need to check their own / competitor listings).
--- Students see contact info ONLY if they have paid.
+-- Landlords ONLY see contact info for their OWN properties.
+-- Students/Landlords see contact info ONLY if they have paid.
 -- Anonymous users see nothing.
 CREATE OR REPLACE VIEW public.secure_listings AS 
 SELECT 
@@ -40,7 +39,6 @@ SELECT
   CASE 
     WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.contact_number 
-    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.contact_number
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.contact_number 
     ELSE NULL 
   END as contact_number,
@@ -48,7 +46,6 @@ SELECT
   CASE 
     WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.latitude 
-    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.latitude
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.latitude 
     ELSE NULL 
   END as latitude,
@@ -56,7 +53,6 @@ SELECT
   CASE 
     WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.longitude 
-    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.longitude
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.longitude 
     ELSE NULL 
   END as longitude
@@ -66,8 +62,6 @@ FROM public.listings l;
 GRANT SELECT ON public.secure_listings TO authenticated, anon;
 
 -- 4. Create an RPC Function for your Webhook
--- Your payment gateway Edge Function will call this SQL function.
--- It securely updates the database AND the auth.users metadata together.
 CREATE OR REPLACE FUNCTION public.mark_user_paid(student_uuid UUID)
 RETURNS void AS $$
 BEGIN
@@ -82,3 +76,14 @@ BEGIN
   WHERE id = student_uuid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ==========================================
+-- USER CLEANUP (ONE-TIME SCRIPT)
+-- This deletes EVERY user who is NOT a landlord with at least 1 property.
+-- Run this in your Supabase SQL editor to force everyone else to re-sign up.
+-- ==========================================
+DELETE FROM auth.users 
+WHERE id NOT IN (
+    SELECT DISTINCT landlord_id FROM public.listings WHERE landlord_id IS NOT NULL
+);

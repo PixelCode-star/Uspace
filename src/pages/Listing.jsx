@@ -21,7 +21,7 @@ export default function Listing() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isOnWaitlist, setIsOnWaitlist] = useState(false);
 
-  const hasPremiumAccess = user && (user.role === 'landlord' || user.hasPaid);
+  const hasPremiumAccess = user && (user.hasPaid || (listing && user.id === listing.landlord_id));
   const [showPaymentFlow, setShowPaymentFlow] = useState(false);
   const [mobileNumber, setMobileNumber] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
