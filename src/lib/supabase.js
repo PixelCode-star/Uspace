@@ -19,6 +19,15 @@ export const SupabaseAPI = {
         }
       }
     });
+    
+    // Also sync role to profiles table for the secure_listings view
+    if (!error && data?.user) {
+      await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', data.user.id);
+    }
+    
     return { data, error };
   },
 
@@ -225,9 +234,20 @@ export const SupabaseAPI = {
 
   // --- PROFILE ---
   async unlockPremium() {
+    // Update auth metadata (for frontend state)
     const { data, error } = await supabase.auth.updateUser({
       data: { has_paid: true }
     });
+    if (error) return { data, error };
+    
+    // ALSO update profiles table (for secure_listings view)
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      await supabase
+        .from('profiles')
+        .update({ has_paid: true })
+        .eq('id', userData.user.id);
+    }
     return { data, error };
   },
 

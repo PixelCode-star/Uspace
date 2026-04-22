@@ -65,6 +65,10 @@ export default function Listing() {
   };
 
   const handleSubmitReview = async () => {
+    if (user?.role === 'landlord') {
+      window.dispatchEvent(new CustomEvent('show-dialog', { detail: { title: 'Not Allowed', message: 'Landlord accounts cannot post reviews.' } }));
+      return;
+    }
     if (reviewRating === 0 || !reviewComment.trim()) {
       window.dispatchEvent(new CustomEvent('show-dialog', { detail: { message: 'Please provide a rating and comment' } }));
       return;
@@ -404,6 +408,10 @@ export default function Listing() {
                    window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }));
                    return;
                  }
+                 if(!hasPremiumAccess) {
+                   handleUnlockClick();
+                   return;
+                 }
                  const btn = e.currentTarget;
                  btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Sending...';
                  btn.disabled = true;
@@ -491,7 +499,7 @@ export default function Listing() {
       <div style={{ marginTop: '64px', borderTop: '1px solid var(--bg-highlight)', paddingTop: '40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <h2 style={{ fontSize: '2rem' }}>Reviews</h2>
-          {user && (
+          {user && user.role !== 'landlord' && (
             <button className="btn btn-primary" onClick={() => setReviewModalOpen(true)}>
               Write a Review
             </button>
@@ -505,6 +513,12 @@ export default function Listing() {
               <button className="btn btn-outline" onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { action: 'login' } }))}>
                 Sign in to review
               </button>
+            )}
+            {user && user.role === 'landlord' && (
+              <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+                <i className="ph ph-info" style={{ marginRight: '6px' }}></i>
+                Landlord accounts cannot post reviews.
+              </p>
             )}
           </div>
         ) : (

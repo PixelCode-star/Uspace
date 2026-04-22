@@ -3,12 +3,18 @@
 -- Run this in your Supabase SQL Editor
 -- ==========================================
 
--- 1. Add `has_paid` to your physical profiles table
+-- 1. Add `has_paid` and `role` to your physical profiles table
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS has_paid BOOLEAN DEFAULT false;
 
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'student';
+
 -- 2. Create a secure view to protect the raw contact numbers and GPS coordinates
 -- This ensures that even if a student inspects the network tab, the data physically isn't there unless paid.
+-- Landlords ALWAYS see contact info (they need to check their own / competitor listings).
+-- Students see contact info ONLY if they have paid.
+-- Anonymous users see nothing.
 CREATE OR REPLACE VIEW public.secure_listings AS 
 SELECT 
   l.id,
@@ -32,19 +38,25 @@ SELECT
   l.created_at,
   -- Secure Columns below:
   CASE 
+    WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.contact_number 
+    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.contact_number
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.contact_number 
     ELSE NULL 
   END as contact_number,
   
   CASE 
+    WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.latitude 
+    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.latitude
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.latitude 
     ELSE NULL 
   END as latitude,
   
   CASE 
+    WHEN auth.uid() IS NULL THEN NULL
     WHEN auth.uid() = l.landlord_id THEN l.longitude 
+    WHEN (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'landlord' THEN l.longitude
     WHEN (SELECT has_paid FROM public.profiles WHERE id = auth.uid()) = true THEN l.longitude 
     ELSE NULL 
   END as longitude
@@ -54,7 +66,7 @@ FROM public.listings l;
 GRANT SELECT ON public.secure_listings TO authenticated, anon;
 
 -- 4. Create an RPC Function for your Webhook
--- Your Flutterwave/Paystack Edge Function will simply call this SQL function.
+-- Your payment gateway Edge Function will call this SQL function.
 -- It securely updates the database AND the auth.users metadata together.
 CREATE OR REPLACE FUNCTION public.mark_user_paid(student_uuid UUID)
 RETURNS void AS $$
