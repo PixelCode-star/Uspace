@@ -29,7 +29,7 @@ const CATEGORIES = [
 export default function Browse() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const hasPremiumAccess = user && user.hasPaid;
+  const hasPremiumAccess = true; // Paywall removed for now
   
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
